@@ -73,7 +73,7 @@ h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0}
 .resume-note{margin-top:14px;font-size:.92rem;color:var(--muted)}
 .setpick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:22px;max-width:680px}
 .btn.sm{padding:5px 12px;font-size:.85rem;border-width:1.5px}
-@media (max-width:620px){.setpick{grid-template-columns:repeat(2,minmax(0,1fr))}.lrow{grid-template-columns:auto 1fr auto;row-gap:2px}.lrow .dt{grid-column:1 / -1;grid-row:2}.lrow .sc{text-align:right}}
+@media (max-width:620px){.setpick{grid-template-columns:repeat(2,minmax(0,1fr))}.lrow{grid-template-columns:auto 1fr auto auto;row-gap:2px}.lrow .dt{grid-column:1 / -1;grid-row:2}.lrow .sc{text-align:right}}
 .setbtn{text-align:left;background:var(--sheet);border:1.5px solid var(--rule);border-radius:10px;padding:12px 14px;display:grid;gap:2px}
 .setbtn b{font-family:var(--display);font-size:1.1rem}
 .setbtn span{font-size:.85rem;color:var(--muted)}
@@ -126,10 +126,18 @@ h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0}
 
 /* modal */
 .modal-bg{position:fixed;inset:0;background:rgba(10,18,17,.55);display:grid;place-items:center;padding:20px;z-index:20}
-.modal{background:var(--sheet);border-radius:12px;padding:24px;max-width:440px;width:100%;border:1px solid var(--rule)}
+.modal{background:var(--sheet);border-radius:12px;padding:24px;max-width:500px;width:100%;border:1px solid var(--rule)}
 .modal h2{font-size:1.35rem;margin-bottom:8px}
 .modal p{color:var(--muted);margin:0 0 18px}
 .modal .row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.modal p{color:var(--ink)}
+.btn.danger{background:var(--wrong);border-color:var(--wrong);color:#fff}
+.btn.danger:hover{background:transparent;color:var(--wrong)}
+.icobtn{border:1.5px solid transparent;background:transparent;color:var(--muted);border-radius:8px;width:34px;height:34px;display:inline-grid;place-items:center;padding:0}
+.icobtn:hover{color:var(--wrong);border-color:var(--wrong);background:var(--wrong-soft)}
+.qtag{font-size:.75rem;font-weight:700;color:var(--flag);background:var(--flag-soft);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.quitbtn{border-color:var(--rule)}
+.quitnote{display:inline-block;background:var(--flag-soft);border-left:4px solid var(--flag);border-radius:6px;padding:8px 12px;margin:0 0 12px;color:var(--ink)}
 
 /* ---------- results ---------- */
 .results h1{font-size:clamp(1.9rem,4.6vw,2.8rem);font-weight:800;letter-spacing:-.02em;max-width:22ch}
@@ -174,7 +182,7 @@ h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0}
 .log{margin-top:40px;max-width:760px}
 .log h2{font-size:1.25rem;margin-bottom:6px}
 .log .sub{color:var(--muted);font-size:.92rem;margin:0 0 12px;max-width:64ch}
-.lrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:14px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule)}
+.lrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:14px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule)}
 .lrow .an{font-family:var(--display);font-weight:700;white-space:nowrap}
 .lrow .dt{color:var(--muted);font-size:.92rem}
 .lrow .sc{font-family:var(--mono);font-variant-numeric:tabular-nums}
@@ -1418,7 +1426,7 @@ function buildRecord(){
   var fin=state.finishedAt||Date.now();
   return {id:"attempt-"+fin, set:state.set, finishedAt:fin, startedAt:state.startedAt, timed:!!state.timed,
     minutesUsed:state.startedAt?Math.round((fin-state.startedAt)/600)/100:null,
-    score:right, total:QUESTIONS.length, percent:Math.round(right/Math.max(1,QUESTIONS.length)*100), sections:per, items:items};
+    quit:!!state.quit, score:right, total:QUESTIONS.length, percent:Math.round(right/Math.max(1,QUESTIONS.length)*100), sections:per, items:items};
 }
 function logAttempt(){
   if(state.logId)return;
@@ -1577,13 +1585,15 @@ function logHTML(){
   var rows=attemptLog.slice().reverse().map(function(r){
     var d=new Date(r.finishedAt);
     var when=d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})+", "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
-    return '<div class="lrow"><span class="an">Attempt '+r.attempt+'</span><span class="dt">'+esc(setLabel(r.set||"A"))+', '+esc(when)+(r.minutesUsed!==null&&r.minutesUsed!==undefined?' &nbsp; '+Math.round(r.minutesUsed)+' min':'')+'</span><span class="sc">'+r.score+'/'+(r.total||45)+' ('+r.percent+'%)</span>'+
-      (DL?'<button class="btn ghost sm" data-pdf="'+esc(r.id)+'" aria-label="Download attempt '+r.attempt+' as PDF">PDF</button>':'')+'</div>';
+    return '<div class="lrow"><span class="an">Attempt '+r.attempt+'</span><span class="dt">'+esc(setLabel(r.set||"A"))+', '+esc(when)+(r.minutesUsed!==null&&r.minutesUsed!==undefined?' &nbsp; '+Math.round(r.minutesUsed)+' min':'')+(r.quit?' &nbsp; <span class="qtag">quit early</span>':'')+'</span><span class="sc">'+r.score+'/'+(r.total||45)+' ('+r.percent+'%)</span>'+
+      (DL?'<button class="btn ghost sm" data-pdf="'+esc(r.id)+'" aria-label="Download attempt '+r.attempt+' as PDF">PDF</button>':'')+
+      '<button class="icobtn" data-del="'+esc(r.id)+'" aria-label="Delete attempt '+r.attempt+'" title="Delete attempt"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false"><path d="M9 3h6m-9 3h12m-1.5 0-.7 12.1A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.9L7.5 6M10.5 10v6m3-6v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>';
   }).join("");
   return '<div class="log"><h2>Attempt log</h2><p class="sub">Each submitted attempt is saved with every answer you picked and the correct answer'+(DB&&UID?', in private storage only you can see. Ask Claude in chat to read your log and it can see the same details.':', in this browser.')+'</p>'+rows+
     '<div class="acts">'+(DL?'<button class="btn ghost" id="dl">Download all attempts (PDF)</button>':'')+(logMsg?'<span class="note" role="status">'+esc(logMsg)+'</span>':'')+'</div></div>';
 }
-function wireLog(){var b=document.getElementById("dl");if(b)b.onclick=downloadLog;app.querySelectorAll("[data-pdf]").forEach(function(x){x.onclick=function(){downloadAttempt(x.dataset.pdf);};});}
+function wireLog(){var b=document.getElementById("dl");if(b)b.onclick=downloadLog;app.querySelectorAll("[data-pdf]").forEach(function(x){x.onclick=function(){downloadAttempt(x.dataset.pdf);};});
+  app.querySelectorAll("[data-del]").forEach(function(x){x.onclick=function(){confirmDelete(x.dataset.del);};});}
 
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function fmt(s){return esc(s).replace(/`([^`]+)`/g,"<code>$1</code>");}
@@ -1653,7 +1663,8 @@ function renderExam(){
   app.innerHTML=
    '<div class="bar"><span class="title">Data Engineer Associate practice exam, '+esc(setLabel(state.set))+'</span>'+
    '<span class="right"><span class="timer" id="timer" aria-live="off"></span>'+
-   '<button class="btn ghost sheet-toggle" id="tog" aria-expanded="'+sheetOpen+'">Answer sheet</button></span></div>'+
+   '<button class="btn ghost sheet-toggle" id="tog" aria-expanded="'+sheetOpen+'">Answer sheet</button>'+
+   '<button class="btn ghost sm quitbtn" id="quit">Quit</button></span></div>'+
    '<div class="exam">'+
    '<aside class="sheet'+(sheetOpen?" open":"")+'" id="sheet">'+sheetHTML()+'</aside>'+
    '<main>'+
@@ -1681,11 +1692,43 @@ function wireExam(){
   document.getElementById("submit").onclick=confirmSubmit;
   var s2=document.getElementById("submit2"); if(s2)s2.onclick=confirmSubmit;
   document.getElementById("tog").onclick=function(){sheetOpen=!sheetOpen;renderExam();};
+  document.getElementById("quit").onclick=confirmQuit;
 }
 function pick(i){state.answers[state.cur]=i;save();renderExam();var b=app.querySelector('[data-pick="'+i+'"]');if(b)b.focus();}
 function go(i){if(i<0||i>QUESTIONS.length-1)return;state.cur=i;save();renderExam();window.scrollTo(0,0);}
 function toggleFlag(){if(state.flags[state.cur])delete state.flags[state.cur];else state.flags[state.cur]=true;save();renderExam();}
 
+function askModal(o,onOk){
+  var back=document.activeElement;
+  var bg=document.createElement("div");bg.className="modal-bg";
+  bg.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="amt" aria-describedby="amd"><h2 id="amt">'+esc(o.title)+'</h2><div id="amd">'+o.html+'</div>'+
+    '<div class="row"><button class="btn ghost" id="amc">'+esc(o.cancel||"Cancel")+'</button><button class="btn'+(o.danger?' danger':'')+'" id="amo">'+esc(o.ok)+'</button></div></div>';
+  document.body.appendChild(bg);
+  var close=function(){document.removeEventListener("keydown",esck,true);bg.remove();if(back&&back.focus&&document.body.contains(back))back.focus();};
+  var esck=function(e){if(e.key==="Escape"){e.stopPropagation();close();}};
+  document.addEventListener("keydown",esck,true);
+  document.getElementById(o.focusOk?"amo":"amc").focus();
+  document.getElementById("amc").onclick=close;
+  document.getElementById("amo").onclick=function(){close();onOk();};
+  bg.addEventListener("click",function(e){if(e.target===bg)close();});
+}
+function confirmQuit(){
+  var left=QUESTIONS.length-answeredCount();
+  askModal({title:"Quit this exam?",ok:"Quit and see score",cancel:"Keep going",danger:true,
+    html:'<p>'+(left>0?'You have <b>'+left+' unanswered question'+(left>1?'s':'')+'</b>. If you quit now, they stay empty and count as wrong.':'All questions are answered, so quitting is the same as submitting.')+'</p>'+
+      '<p>Your answers so far are scored, and the attempt is saved to your log marked "quit early". You can delete it from the log afterwards.</p>'},
+    function(){state.quit=true;finish();});
+}
+function confirmDelete(id){
+  var r=attemptLog.filter(function(x){return x.id===id;})[0];if(!r)return;
+  askModal({title:"Delete attempt "+r.attempt+"?",ok:"Delete attempt",cancel:"Keep it",danger:true,
+    html:'<p>'+esc(setLabel(r.set||"A"))+', '+r.score+'/'+(r.total||45)+' ('+r.percent+'%). This removes it from your log, progress chart and the "missed questions" weighting. This can\'t be undone (unless you have an exported backup).</p>'},
+    function(){
+      attemptLog=attemptLog.filter(function(x){return x.id!==id;});sortLog();saveLog();
+      logMsg="Attempt deleted.";render();
+      var h2=document.querySelector(".log h2")||document.querySelector("h1");if(h2){h2.setAttribute("tabindex","-1");h2.focus();}
+    });
+}
 function confirmSubmit(){
   var left=QUESTIONS.length-answeredCount(), fl=Object.keys(state.flags).length;
   var msg=left>0?("You have "+left+" unanswered question"+(left>1?"s":"")+". Unanswered questions count as wrong."):"All "+QUESTIONS.length+" questions are answered.";
@@ -1729,6 +1772,7 @@ function renderResults(){
   var used=state.finishedAt&&state.startedAt?clock(state.finishedAt-state.startedAt):null;
   app.innerHTML=
    '<section class="results">'+
+   (state.quit?'<p class="quitnote">You quit early: '+(N-answeredCount())+' question'+((N-answeredCount())===1?' was':'s were')+' left unanswered and counted as wrong.</p>':'')+
    '<h1>You got '+right+' of '+N+' right ('+pct+'%)</h1><p class="lede" style="margin-top:6px">'+esc(setLabel(state.set))+'</p>'+
    '<p class="lede">'+(used?'Time used: '+used+'. ':'')+'The exam guide doesn\'t publish a passing score, so treat this as a map of where you stand rather than a pass/fail. The sections below are sorted weakest first, so the top rows are where extra study pays off most.</p>'+
    '<div class="score-strip" role="img" aria-label="'+right+' correct out of '+N+'"><span class="ok" style="width:'+(right/Math.max(1,N)*100)+'%"></span></div>'+
@@ -1739,12 +1783,16 @@ function renderResults(){
      chip("all","All "+N)+chip("wrong","Wrong or skipped")+chip("flagged","Flagged")+
    '</div><div id="items"></div></div>'+
    logHTML()+
-   '<div class="end-actions"><button class="btn" id="again">Take a new exam</button></div>'+
-   '<p class="note" style="color:var(--muted);font-size:.88rem;margin-top:10px;max-width:64ch">This attempt stays in the log above. The next exam is a new mix from the whole bank. You can also open a section\'s study notes or a deep dive from the start page.</p>'+
+   '<div class="end-actions"><button class="btn" id="home">Back to home</button><button class="btn ghost" id="again">Start a new exam</button></div>'+
+   '<p class="note" style="color:var(--muted);font-size:.88rem;margin-top:10px;max-width:64ch">This attempt is saved in the log above. Home has study notes, deep dives and tools; a new exam is a fresh mix from the whole bank.</p>'+
    '</section>';
   app.querySelectorAll("[data-f]").forEach(function(b){b.onclick=function(){state.filter=b.dataset.f;save();renderResults();};});
   wireNotesButtons();
-  document.getElementById("again").onclick=function(){logAttempt();var t=state.timed;state=fresh();state.timed=t;useSet(state.set);save();logMsg="";render();window.scrollTo(0,0);};
+  var goHome=function(startNew){logAttempt();var t=state.timed;state=fresh();state.timed=t;useSet(state.set);
+    if(startNew){buildMix();useSet("M");state.startedAt=Date.now();state.phase="exam";}
+    save();logMsg="";notesSec=null;topicId=null;toolId=null;render();window.scrollTo(0,0);};
+  document.getElementById("home").onclick=function(){goHome(false);};
+  document.getElementById("again").onclick=function(){goHome(true);};
   wireLog();
   renderItems();
 }
@@ -2589,7 +2637,7 @@ function importProgress(text){
     if(!r||typeof r.id!=="string"||have[r.id]||typeof r.finishedAt!=="number"||!Array.isArray(r.items))return;
     var c={id:r.id,set:typeof r.set==="string"?r.set:"A",finishedAt:r.finishedAt,startedAt:typeof r.startedAt==="number"?r.startedAt:null,timed:!!r.timed,
       minutesUsed:typeof r.minutesUsed==="number"?r.minutesUsed:null,score:+r.score||0,total:+r.total||45,percent:+r.percent||0,
-      sections:Array.isArray(r.sections)?r.sections:[],items:r.items};
+      sections:Array.isArray(r.sections)?r.sections:[],items:r.items,quit:!!r.quit};
     attemptLog.push(c);have[c.id]=1;added++;
   });
   sortLog();saveLog();
